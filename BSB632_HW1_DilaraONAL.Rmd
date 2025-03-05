@@ -1,0 +1,283 @@
+---
+title: "BSB632 HW1"
+author: "Dilara ONAL"
+date: "2024-03-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# BSB632
+## Homework I
+
+### **Question 1**
+
+The "Possum.csv" dataset contains various measurements of possums. Various analyzes were performed on the Possum data and the analyzes were visualized with graphs. A summary of the data set is provided below.
+
+```{r, echo = FALSE}
+possum_data <- read.table("possum.csv", header = TRUE,sep = ",",  ) 
+summary(possum_data)
+```
+
+
+**a )** The data set was read as a data frame, then the possum with the highest total length and the gender of this possum were found.
+
+
+Information about the possum with the highest total length:
+```{r, echo=FALSE}
+highest_length <- possum_data[which.max(possum_data$total.length),]
+print(highest_length)
+```
+The output was analyzed and it was observed that the gender of the possum with the highest total length was **female**.
+
+
+**b )** A graph was created to show the relationship between tail and head length in the Possum dataset. Possums from Victoria and other regions were shown separately on the chart.
+
+```{r , echo=FALSE}
+attach(possum_data)
+plot(tail.length, head.length, main = "Relationship Between Tail Length and Head Length",
+     xlab = "Tail Length", ylab = "Head Length", type = "n")
+
+points(tail.length[Pop == "Vic"], head.length[Pop == "Vic"], pch = 16, col = "red")
+points(tail.length[Pop != "Vic"], head.length[Pop != "Vic"], pch = 17, col = "blue")
+
+legend("topright", legend = c("Victoria", "Other"), pch = 16:17, col = c("red","blue"), cex = 0.7, text.font = 2, bty = "n")
+
+```
+
+As indicated in the plot, blue triangle data points represent possums from other regions and red circle data points represent possums from Victorian regions. When the graph is analyzed, it can be said that the data obtained from the Victoria region is generally shorter in terms of tail length, but when looking at the relationship with head length, no significant difference was observed in the two groups.
+
+
+**c )** The average tail and head lengths were calculated and information was obtained in which gender had the smallest average lengths. This analysis was first written in a single line, then the dplyr library was downloaded and written using the functions in the dplyr library. The code written in both cases is shared below.
+
+
+```{r, echo=TRUE}
+mean_tail_length <- tapply(possum_data$tail.length, possum_data$sex, mean) 
+smallest_tail_gender <- names(mean_tail_length)[which.min(mean_tail_length)] 
+print(mean_tail_length)
+
+mean_total_length <- tapply(possum_data$total.length, possum_data$sex, mean)
+smallest_total_gender <- names(mean_total_length)[which.min(mean_total_length)] 
+print(mean_total_length)
+
+```
+
+Male and female possums were examined and it was observed that their tail and head lengths were not very different from each other. The difference is not significantly different from each other. It was observed that the gender of the possum with the shortest average tail length was **male**, while the gender of the possum with the shortest average head length was **male**.
+
+
+The analysis using the **dplyr** library was repeated. Below are the codes written with the dplyr library.
+
+```{r, echo=TRUE, message=FALSE}
+library(dplyr)
+```
+
+
+```{r, echo=TRUE}
+
+possum_genders <- group_by(possum_data, sex) 
+
+mean_tail <- summarise(possum_genders, mean(tail.length)) 
+smallest_tail <- mean_tail$sex[which.min(mean_tail$`mean(tail.length)`)]
+print(mean_tail)
+
+mean_total <- summarise(possum_genders, mean(total.length))
+smallest_total <- mean_total$sex[which.min(mean_total$`mean(total.length)`)]
+print(mean_total)
+```
+
+As a result of the analysis made using the Dplyr library, it was observed that the data obtained were the same. It was observed that the output of this code was printed more regularly.
+
+
+**d )** The average tail lengths of male and female possums and those of possums in Victoria and other regions were calculated.
+
+Results of mean of tail lengths male and female that from Victoria ans from other regions:
+```{r, echo=FALSE, }
+mean_tail_Pop_sex <- tapply(possum_data$tail.length, list(possum_data$sex, possum_data$Pop), mean) 
+print(mean_tail_Pop_sex)
+```
+
+
+Results of mean of tail lengths male and female that from Victoria ans from other regions with use dplyr:
+```{r, echo=FALSE }
+possum_Pop_sex <- group_by(possum_data, sex, Pop)
+mean_tail_ps <- summarise(possum_Pop_sex, mean(tail.length), .groups = "drop") 
+print(mean_tail_ps)
+```
+
+
+
+**e )** The mean of each numerical column was calculated for seven different site where possums were captured. There are missing data in some columns. To ignore this data, rm.na was used for the relevant input parameter. Location information with the shortest and tallest possums on average was obtained.
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+mean_site <- aggregate(possum_data, list(site = possum_data$site), mean, na.rm = TRUE) 
+print(mean_site)
+longest_site <- mean_site[which.max(mean_site$total.length),]
+print(paste("Longest possums on average according to site:", longest_site$site))
+
+smallest_site <- mean_site[which.min(mean_site$total.length),]
+print(paste("Smallest possums on average according to site:", smallest_site$site))
+```
+
+The analysis was repeated using the dplyr package. Added an additional column in the output data frame in the dplyr analysis that will report the number of data points for each site. Below is the output of the code written using the dplyr package.
+
+```{r, echo=FALSE, warning=FALSE}
+
+mean_site_dplyr <- possum_data %>%
+  group_by(site) %>% 
+  summarise(across(where(is.numeric), mean, na.rm = TRUE),data_points = n()) 
+print(mean_site_dplyr)
+
+longest_site_dplyr <- mean_site_dplyr %>%
+  filter(total.length == max(total.length))
+print(paste("Longest possums on average according to site with dplyr:", longest_site_dplyr$site))
+
+smallest_site_dplyr <- mean_site_dplyr %>%
+  filter(total.length == min(total.length))
+print(paste("Smallest possums on average according to site with dplyr:", smallest_site_dplyr$site))
+```
+
+
+Plots were drawn to observe the relationship between tail and head length in seven different site and their relationships were checked.
+
+```{r, echo=FALSE, }
+plot(mean_site$tail.length, mean_site$head.length, 
+     main ="Relationship Between Average Tail Length and Head Length",
+     xlab ="Average Tail Length", ylab = "Average Head Length", 
+     pch = 16, cex= 0.7 , col = "red" ) 
+text(mean_site$tail.length, mean_site$head.length, labels =mean_site$site, pos = 2, cex=0.7)
+
+```
+
+
+When looking at the graph of average head and tail lengths, it can be said that the longest and shortest lengths before are in the expected position on the graph. When looking at the average head length, the general distribution is observed to be in the range of 92-95, and when looking at the tail length, it is observed to be in the range of 35-38. The graph also confirmed that site 2 has the shortest possums and site 4 has the longest average possums.
+
+
+**f )** The average ages of possums in the Possum dataset were calculated. Then, using the dplyr package, a new column was made using the labels “young” for possums with below average age and “old” for possums with above average age. This column was added to the dataset and a few rows from the new dataset were output as a summary.
+
+
+```{r, echo=FALSE, }
+average_age <- mean(possum_data$age, na.rm = TRUE)
+print(average_age)
+
+possum_data_age <- possum_data %>%
+  mutate(age.groups = ifelse(age < average_age, "young", "old")) 
+head(possum_data_age)
+
+```
+
+
+
+```{r, echo=FALSE, }
+
+max_skull_width <- possum_data_age %>%
+  filter(!is.na(age.groups)) %>% 
+  group_by(age.groups) %>%
+  summarise(max_skull_width = max(skull.width, na.rm = TRUE))
+print(max_skull_width)
+
+```
+The maximum skull width of young and old possums was checked. As a result of the analysis, the maximum skull width of old and young possums was observed to be very close to each other.
+
+```{r, echo=FALSE, }
+
+max_skull_width_gender <- possum_data_age %>%
+  filter(!is.na(age.groups)) %>%
+  group_by(age.groups, sex) %>%
+  summarise(max_skull_width = max(skull.width, na.rm = TRUE), .groups = "drop")
+print(max_skull_width_gender)
+
+```
+
+The analysis was repeated, taking into account both old and young age categories and gender. When the results are analyzed, it can be said that the average age of the old female possums is younger than the others, but in general, the average age of the groups is close to each other.
+
+
+
+### **Question 2**
+
+Matrix A was created and necessary changes were made on this matrix. The changes were performed both with and without vectorization. Codes written to show the difference between vectorized and non-vectorized codes are included.
+
+
+
+```{r, echo=FALSE, }
+A <- matrix(c(-3.2, 0, 0.1, 2.4, 7.5,
+              0.27, -4.3, -0.03, -0.07, 0,
+              -9, 0, 6.2, -1, -1.2), nrow = 3, byrow = TRUE)
+print(A)
+
+```
+
+**a )** The number of positive elements in matrix A was counted.
+
+**With vectorization**
+```{r, echo=TRUE, }
+num_positive <- sum(A > 0)
+print(num_positive)
+```
+
+**Without vectorization**
+```{r, echo=TRUE, }
+num_pos <- 0
+for (i in 1:nrow(A)) { 
+  for (j in 1:ncol(A)) { 
+    if (A[i, j] > 0) { 
+      num_pos<- num_pos + 1 
+    }
+  }
+}
+print(num_pos)
+
+```
+
+
+**b ) ** The absolute value of each element in the matrix less than -0.5 was taken and a new matrix was created.
+
+**With vectorization**
+```{r, echo=TRUE, }
+abs_value <- ifelse(A < -0.5, abs(A), A)
+print(abs_value)
+```
+
+**Without vectorization**
+```{r, echo=TRUE, }
+abs_A <- matrix(0, nrow = nrow(A), ncol = ncol(A)) 
+for (i in 1:nrow(A)) {
+  for (j in 1:ncol(A)) {
+    if (A[i, j] < -0.5) {
+      abs_A[i, j] <- abs(A[i, j]) 
+    } else {
+      abs_A[i, j] <- A[i, j] 
+    }
+  }
+}
+print(abs_A)
+```
+
+
+**c )** All zeros in the created matrix were replaced with -10. In this way, the desired changes were made on the matrix.
+
+
+**With vectorization**
+```{r, echo=TRUE, }
+result_A <- replace(abs_value,  abs_value == 0, -10) 
+print(result_A)
+```
+
+**Without vectorization**
+```{r, echo=TRUE, }
+result_A_mat <- matrix(0, nrow = nrow(abs_A), ncol = ncol(abs_A))
+for (i in 1:nrow(abs_A)) {
+  for (j in 1:ncol(abs_A)) {
+    if (abs_A[i, j] == 0) {
+      result_A_mat[i, j] <- -10 
+    } else {
+      result_A_mat[i, j] <- abs_A[i, j]
+    }
+  }
+}
+print(result_A_mat)
+```
+
