@@ -36,4 +36,14 @@ For the matrix A; write an R script, which
 
 Solve the questions both with and without vectorization. 
 
-**The results were uploaded along with an .R file containing comments and a .Rmd file containing R Markdown and the html output of the R markdown code.**
+**The results were uploaded along with an .R file containing comments and a .Rmd file containing R Markdown code.**
+
+## R Markdown (Rmd)
+
+**R Markdown (.Rmd) is a file format that combines R code, text, and visualizations into a single, dynamic document. It allows users to write reports, perform data analysis, and generate documents in various formats like HTML, PDF, and Word.**
+
+### Basic Structure of an R Markdown File
+1. YAML Header (Metadata for document settings)
+2. Markdown Text (Formatted text for explanations)
+3. R Code Chunks (Executable R code inside {r} blocks)
+4. Rendered Output (Tables, plots, and analysis results)
